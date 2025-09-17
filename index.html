@@ -1,39 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>50 Pairs Demo — Charts + Indicators</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <style>
-    :root{
-      --bg:#0b0f1a; --card:#0f1724; --accent:#06d6a0; --muted:#9ad1c1;
-    }
-    body{margin:0;font-family:Inter, Arial, Helvetica, sans-serif;background:var(--bg);color:#e6eef6;padding:12px}
-    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    h1{margin:0;font-size:18px;color:var(--accent)}
-    .controls{margin-left:auto}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-    .pair{background:var(--card);border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.6)}
-    .pair h4{margin:0 0 6px;font-size:13px;color:var(--accent)}
-    .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-top:6px}
-    .price{font-weight:700}
-    canvas{width:100%!important;height:90px!important}
-    /* Toasts */
-    #toastContainer{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-    .toast{padding:10px 12px;border-radius:8px;color:#fff;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
-    .toast.buy{background:#157f3a}
-    .toast.sell{background:#7f1414}
-    .toast.hold{background:#a67b00;color:#111}
-    .muted{color:var(--muted);font-size:12px}
-    @media (max-width:600px){ .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))} }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>50 Pairs Demo — Futures Exchange (Simulated)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<style>
+:root{
+  --bg:#0b0f1a; --card:#0f1724; --accent:#06d6a0; --muted:#9ad1c1;
+  --danger:#ef476f; --gold:#ffd166;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter, Arial, Helvetica, sans-serif;background:var(--bg);color:#e6eef6;padding:12px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+h1{margin:0;font-size:18px;color:var(--accent)}
+.controls{margin-left:auto;display:flex;gap:10px;align-items:center}
+.balance{background:#07111a;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.pair{background:var(--card);border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.6);min-height:320px;display:flex;flex-direction:column}
+.pair h4{margin:0 0 6px;font-size:13px;color:var(--accent)}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-top:6px}
+.price{font-weight:700}
+canvas.mainChart{width:100%!important;height:100px!important}
+canvas.pnlChart{width:100%!important;height:48px!important;margin-top:6px}
+.trade-controls{margin-top:8px;font-size:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.trade-controls input{background:#07161d;color:#e6eef6;border:1px solid #22323b;border-radius:6px;padding:6px 8px;font-size:13px}
+.trade-controls button{font-size:13px;cursor:pointer;border-radius:6px;padding:6px 8px;border:none}
+.btn-long{background:var(--accent);color:#002;box-shadow:0 6px 18px rgba(6,214,160,0.06)}
+.btn-short{background:var(--danger);color:#fff;box-shadow:0 6px 18px rgba(239,71,111,0.06)}
+.pnl{font-weight:700;color:var(--gold);margin-left:auto}
+.trades-list{margin-top:8px;font-size:12px;max-height:80px;overflow:auto;border-top:1px dashed rgba(255,255,255,0.02);padding-top:8px}
+.trade-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px;border-radius:6px;background:rgba(255,255,255,0.01);margin-bottom:6px}
+.trade-meta{font-size:11px;color:var(--muted)}
+.close-btn{background:#111;border:1px solid rgba(255,255,255,0.04);color:var(--gold);padding:4px 8px;border-radius:6px;cursor:pointer}
+.muted{color:var(--muted);font-size:12px}
+#toastContainer{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.toast{padding:10px 12px;border-radius:8px;color:#fff;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+.toast.buy{background:#157f3a}
+.toast.sell{background:#7f1414}
+.toast.hold{background:#a67b00;color:#111}
+@media (max-width:900px){ .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))} }
+@media (max-width:600px){ .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))} .pair{min-height:360px} }
+</style>
 </head>
 <body>
 
 <header>
-  <h1>📡 Demo Trading Bot — 50 Pairs (Indicators)</h1>
-  <div class="controls muted">Simulated prices · Indicators: SMA/EMA/Bollinger/RSI/MACD</div>
+  <h1>🔮 CroakSim — Futures Exchange (Simulated)</h1>
+  <div class="controls">
+    <div class="muted">Simulated · Indicators: SMA/EMA/Bollinger/RSI/MACD</div>
+    <div class="balance" id="balance">Balance: $10,000.00</div>
+  </div>
 </header>
 
 <main>
@@ -44,12 +61,14 @@
 <div id="toastContainer"></div>
 
 <!-- Sounds -->
-<audio id="soundBuy" preload="auto" src="https://actions.google.com/sounds/v1/animals/frog_croak.ogg"></audio>
+<audio id="soundBuy" preload="auto" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 <audio id="soundSell" preload="auto" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 <audio id="soundHold" preload="auto" src="https://actions.google.com/sounds/v1/alarms/ding.ogg"></audio>
 
 <script>
-/* ---------- Setup pairs ---------- */
+/* ---------- Config / State ---------- */
+let WALLET = 10000.00; // simulated global balance
+const MAX_LEVERAGE = 50;
 const coins = ["BTC","ETH","BNB","SOL","XRP","ADA","DOGE","DOT","MATIC","LTC",
                "AVAX","SHIB","UNI","LINK","ATOM","XLM","ETC","FIL","APT","NEAR",
                "ICP","HBAR","VET","GRT","AAVE","SAND","MANA","AXS","EGLD","THETA",
@@ -58,25 +77,48 @@ const coins = ["BTC","ETH","BNB","SOL","XRP","ADA","DOGE","DOT","MATIC","LTC",
 
 const pairs = coins.map(c => ({
   name: c + "/USDT",
-  prices: generateInitialPrices(40),
+  prices: generateInitialPrices(50),
   charts: { main: null },
+  trades: [],          // active trades
+  pnlHistory: [],      // for mini chart
+  pnlChart: null,
+  lastSignal: null
 }));
 
 const grid = document.getElementById('pairsGrid');
+const balanceEl = document.getElementById('balance');
 
+/* ---------- Header Balance update ---------- */
+function updateBalanceDisplay(){ balanceEl.innerText = `Balance: $${WALLET.toFixed(2)}`; }
+updateBalanceDisplay();
+
+/* ---------- Build UI for each pair ---------- */
 pairs.forEach((pair, idx) => {
   const el = document.createElement('div');
   el.className = 'pair';
   el.innerHTML = `
     <h4>${pair.name}</h4>
-    <canvas id="c${idx}"></canvas>
+    <canvas id="c${idx}" class="mainChart"></canvas>
     <div class="meta">
       <div class="muted">Price</div>
       <div><span class="price" id="p${idx}">-</span></div>
     </div>
+
+    <div class="trade-controls" data-idx="${idx}">
+      <input type="number" class="trade-amount" placeholder="Amount ($)" style="width:95px" />
+      <input type="number" class="trade-leverage" placeholder="Leverage" value="1" min="1" max="${MAX_LEVERAGE}" style="width:70px" />
+      <button class="btn-long">Long</button>
+      <button class="btn-short">Short</button>
+      <div class="pnl">PNL: $0.00</div>
+    </div>
+
+    <canvas class="pnlChart"></canvas>
+
+    <div class="trades-list"></div>
   `;
   grid.appendChild(el);
 
+  /* --- Main chart --- */
   const ctx = document.getElementById(`c${idx}`).getContext('2d');
   const cfg = {
     type: 'line',
@@ -109,9 +151,119 @@ pairs.forEach((pair, idx) => {
   };
   pair.charts.main = new Chart(ctx, cfg);
   updateAllIndicatorsForPair(pair, idx);
+
+  /* --- PNL mini chart --- */
+  const pnlCanvas = el.querySelector('.pnlChart').getContext('2d');
+  pair.pnlChart = new Chart(pnlCanvas, {
+    type:'line',
+    data:{ labels: [], datasets:[ { label:'PNL', data:[], borderColor:'#ffd166', borderWidth:2, pointRadius:0, tension:0.3 } ] },
+    options:{ animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+  });
+
+  /* --- Controls --- */
+  const amountInput = el.querySelector('.trade-amount');
+  const leverageInput = el.querySelector('.trade-leverage');
+  const btnLong = el.querySelector('.btn-long');
+  const btnShort = el.querySelector('.btn-short');
+  const pnlDisplay = el.querySelector('.pnl');
+  const tradesList = el.querySelector('.trades-list');
+
+  btnLong.addEventListener('click', ()=>openTrade('LONG', idx, amountInput, leverageInput, pnlDisplay, tradesList));
+  btnShort.addEventListener('click', ()=>openTrade('SHORT', idx, amountInput, leverageInput, pnlDisplay, tradesList));
+
+  // each pair will have updatePNL to refresh pnl text + chart
+  pair.updatePNL = () => {
+    const lastPrice = pair.prices[pair.prices.length-1];
+    let total = 0;
+    pair.trades.forEach(t => {
+      let change = (lastPrice - t.entryPrice) / t.entryPrice;
+      if(t.side === 'SHORT') change *= -1;
+      const pnl = change * t.amount * t.leverage;
+      total += pnl;
+    });
+    pnlDisplay.innerText = `PNL: $${total.toFixed(2)}`;
+    // push history for mini-chart
+    pair.pnlHistory.push(total);
+    if(pair.pnlHistory.length > 60) pair.pnlHistory.shift();
+    pair.pnlChart.data.datasets[0].data = pair.pnlHistory.slice();
+    pair.pnlChart.data.labels = pair.pnlHistory.map((_,i)=>i);
+    pair.pnlChart.update('none');
+    // also update trade items (show current unrealized PNL per trade)
+    renderTradesList(pair, tradesList);
+  };
+
 });
 
-/* ---------- Utils ---------- */
+/* ---------- Trade functions ---------- */
+function openTrade(side, pairIdx, amountInput, leverageInput, pnlDisplay, tradesList) {
+  const pair = pairs[pairIdx];
+  const amount = parseFloat(amountInput.value);
+  let leverage = parseFloat(leverageInput.value) || 1;
+  if(Number.isNaN(amount) || amount <= 0){ alert('Enter a valid amount in USDT'); return; }
+  if(Number.isNaN(leverage) || leverage < 1) leverage = 1;
+  if(leverage > MAX_LEVERAGE) leverage = MAX_LEVERAGE;
+  // margin check: require available WALLET >= (amount / leverage) * some safety (we'll simply allow all for demo but warn)
+  // For demo: allow trade even if no margin, but display toast
+  const entryPrice = pair.prices[pair.prices.length-1];
+  const trade = {
+    id: Date.now() + Math.random().toString(36).slice(2,8),
+    side, amount, leverage, entryPrice, openedAt: new Date().toISOString()
+  };
+  pair.trades.push(trade);
+  showToast(`${pair.name} ${side} opened @ ${entryPrice.toFixed(2)} (Amt $${amount}, x${leverage})`, side==='LONG' ? 'buy' : 'sell');
+  pair.updatePNL();
+  renderTradesList(pair, tradesList);
+  // clear inputs a bit
+  amountInput.value = '';
+}
+
+function renderTradesList(pair, container){
+  container.innerHTML = '';
+  if(pair.trades.length === 0){
+    container.innerHTML = `<div class="muted" style="padding:6px 0">No open positions</div>`;
+    return;
+  }
+  const lastPrice = pair.prices[pair.prices.length-1];
+  pair.trades.forEach(t => {
+    const change = (lastPrice - t.entryPrice) / t.entryPrice * (t.side === 'SHORT' ? -1 : 1);
+    const pnl = change * t.amount * t.leverage;
+    const pnlLabel = (pnl >= 0 ? '+' : '') + `$${pnl.toFixed(2)}`;
+    const pnlPct = (change * 100 * t.leverage).toFixed(2) + '%';
+    const item = document.createElement('div');
+    item.className = 'trade-item';
+    item.innerHTML = `
+      <div>
+        <div style="font-weight:700">${t.side} ${t.amount}$ x${t.leverage}</div>
+        <div class="trade-meta">Entry ${t.entryPrice.toFixed(2)} · ${pnlLabel} · ${pnlPct}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="close-btn" data-id="${t.id}">Close</button>
+      </div>
+    `;
+    container.appendChild(item);
+    item.querySelector('.close-btn').addEventListener('click', ()=>closeTrade(pair, t.id));
+  });
+}
+
+/* When closing a trade, realize PNL and remove trade */
+function closeTrade(pair, tradeId){
+  const idx = pair.trades.findIndex(t => t.id === tradeId);
+  if(idx === -1) return;
+  const t = pair.trades[idx];
+  const lastPrice = pair.prices[pair.prices.length-1];
+  let change = (lastPrice - t.entryPrice) / t.entryPrice;
+  if(t.side === 'SHORT') change *= -1;
+  const pnl = change * t.amount * t.leverage;
+  // realize to wallet
+  WALLET += pnl;
+  updateBalanceDisplay();
+  showToast(`${pair.name} ${t.side} closed → PNL ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}`, pnl>=0 ? 'buy' : 'sell');
+  // remove trade
+  pair.trades.splice(idx,1);
+  pair.updatePNL();
+}
+
+/* ---------- Indicators & Simulation utils (same as before) ---------- */
 function generateInitialPrices(len){
   const arr = [];
   let p = 100 + Math.random()*50;
@@ -190,8 +342,6 @@ function macdArrays(prices, fast=12, slow=26, sig=9){
   const hist = macdLine.map((v,i)=> (v === null || sigArr[i] === null) ? null : Number((v - sigArr[i]).toFixed(6)) );
   return {macdLine, signal: sigArr, hist};
 }
-
-/* ---------- Update Indicators ---------- */
 function updateAllIndicatorsForPair(pair, idx){
   const prices = pair.prices;
   const chart = pair.charts.main;
@@ -216,20 +366,26 @@ function updateAllIndicatorsForPair(pair, idx){
 
   chart.data.labels = prices.map((_,i) => i);
   chart.update('none');
-  document.getElementById(`p${idx}`).innerText = prices[prices.length-1].toFixed(2);
+  // update price text
+  const idxPriceEl = document.getElementById(`p${idx}`);
+  if(idxPriceEl) idxPriceEl.innerText = prices[prices.length-1].toFixed(2);
 }
 
-/* ---------- Simulation ---------- */
+/* ---------- Simulation tick ---------- */
 function simulateTick(){
   pairs.forEach((pair, idx) => {
     const last = pair.prices[pair.prices.length-1];
-    const drift = (Math.random()-0.5) * 1.8;
+    // add slight trend component for variety
+    const trend = Math.sin(Date.now()/10000 + idx) * 0.2;
+    const drift = (Math.random()-0.5) * 1.6 + trend * 0.2;
     const newPrice = Math.max(0.0001, Number((last + drift).toFixed(4)));
     pair.prices.push(newPrice);
-    if(pair.prices.length > 60) pair.prices.shift();
+    if(pair.prices.length > 80) pair.prices.shift();
 
     updateAllIndicatorsForPair(pair, idx);
+    pair.updatePNL?.();
 
+    // simple SMA/EMA edge signal -> toasts
     const sma5 = smaArray(pair.prices,5).slice(-1)[0];
     const ema12 = emaArray(pair.prices,12).slice(-1)[0];
     let signal = 'HOLD';
@@ -245,11 +401,12 @@ function simulateTick(){
     }
   });
 }
-setInterval(simulateTick, 1200);
+setInterval(simulateTick, 900); // tick frequency (ms)
 
-/* ---------- Toast Queue System ---------- */
+/* ---------- Toast queue ---------- */
 let toastQueue = [];
 let showingToast = false;
+const toastContainer = document.getElementById('toastContainer');
 function processQueue(){
   if(showingToast || toastQueue.length===0) return;
   showingToast = true;
@@ -267,7 +424,7 @@ function processQueue(){
     t.remove();
     showingToast = false;
     processQueue();
-  }, 3500);
+  }, 3000);
 }
 function showToast(msg, type='hold'){
   toastQueue.push({msg,type});
